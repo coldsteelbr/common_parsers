@@ -30,4 +30,17 @@ public class ParseResult {
         }
         return toReturn;
     }
+
+    public String getNiceLook(){
+        StringBuilder builder = new StringBuilder();
+        for(Map<String, String> currentRow : mResult){
+            for(Map.Entry<String, String> currentCol : currentRow.entrySet()){
+                builder.append(currentCol.getKey())
+                       .append(":").append(currentCol.getValue())
+                       .append("\t|\t");
+            }
+            builder.append("\n");
+        }
+        return builder.toString();
+    }
 }
