@@ -1,11 +1,10 @@
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.reactivex.Single;
-import ru.romanbrazhnikov.commonparsers.ICommonParser;
-import ru.romanbrazhnikov.commonparsers.JsoupParser;
-import ru.romanbrazhnikov.commonparsers.ParseResult;
-import ru.romanbrazhnikov.commonparsers.XPathParser;
+import ru.romanbrazhnikov.commonparsers.*;
+import ru.romanbrazhnikov.fileutils.FileUtils;
 
+import java.io.IOException;
 import java.util.*;
 
 public class Main {
@@ -471,25 +470,41 @@ public class Main {
             "\t<span class=\"price\">25 000 руб.</span></td><td>месяц</td>\n" +
             "\t<td class=\"cell_stylish\">\n" +
             "\t\t\t</td>\n" +
-            "</tr>\n" +
-            "\t\t\t\t\t\t\t</table>";
-
+            "</tr>\n"
+            // + "\t\t\t\t\t\t\t</table>";
+            ;
     private static String sPattern
             =
             "{\n" +
-                "\"RowPattern\": \"//table[@class='pseudo']//tr\",\n" +
+                "\"RowPattern\": \"table[@class='pseudo']//tr\",\n" +
                 "\"ColPatterns\": {\n" +
                     "\"ADDRESS\": \"td[@class='cell_stylish']/a\",\n" +
                     "\"SECOND\": \"td[@class='cell_stylish']/a/@href\"\n" +
                 "}\n" +
             "}";
+    //table[@class='search_result_table']//tr
+    private static String sFullDocPattern =
+            "{\n" +
+                "\"RowPattern\": \"//*[@class='search_results_table']//tr[@class='hproduct']\",\n" +
+                "\"ColPatterns\": {\n" +
+                    "\"ADDRESS\": \"td[@class='pr20']/a\",\n" +
+                    "\"SECOND\": \"td[@class='pr20']/a/@href\"\n" +
+                "}\n" +
+            "}";
+
 
     public static void main(String[] args){
         System.out.println("CommonParsers");
 
         ICommonParser parser = new XPathParser();
-        parser.setSource(sSource);
-        parser.setPattern(sPattern);
+        String testSource  = null; //TestSource.getText();
+        try {
+            testSource = FileUtils.readFromFileToString("full_doc.htm");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        parser.setSource(testSource);
+        parser.setPattern(sFullDocPattern);
         parser.setMatchNames(new HashSet<>(Arrays.asList("ADDRESS", "SECOND")));
 
         Map<String, String>  bind = new HashMap<>();

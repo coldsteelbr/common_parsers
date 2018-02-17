@@ -3,7 +3,12 @@ package ru.romanbrazhnikov.commonparsers;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.reactivex.Single;
-import org.htmlcleaner.*;
+import org.htmlcleaner.CleanerProperties;
+import org.htmlcleaner.DomSerializer;
+import org.htmlcleaner.HtmlCleaner;
+import org.htmlcleaner.TagNode;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Entities;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
@@ -44,9 +49,14 @@ public class XPathParser implements ICommonParser {
         mXPath = XPathFactory.newInstance().newXPath();
 
         mCleaner = new HtmlCleaner();
+        CleanerProperties cleanerProperties = mCleaner.getProperties();
+        cleanerProperties.setOmitDeprecatedTags(false);
+        cleanerProperties.setOmitUnknownTags(false);
+        cleanerProperties.setOmitHtmlEnvelope(false);
 
         GsonBuilder builder = new GsonBuilder();
         mGson = builder.setFieldNamingStrategy(f -> {
+            // converting class field names to the config actual names
             switch (f.getName().toLowerCase()) {
                 case "mrowpattern":
                     return "RowPattern";
@@ -83,33 +93,73 @@ public class XPathParser implements ICommonParser {
 
     @Override
     public Single<ParseResult> parse() {
+
+        if (mNames == null)
+            return Single.error(new Exception("Matching names are not set"));
+
+        if (mNames.size() == 0)
+            return Single.error(new Exception("Matching names count is 0 (zero)"));
+
+        if (mSourceString == null)
+            return Single.error(new Exception("No source set"));
+
+
+        return getResult();
+
+
+    }
+
+    private Single<ParseResult> getResult() {
         return Single.create(e -> {
 
+            /* // BEFORE
             // Getting clean html
-            String cleanedHtml = getCleanedHtml();
+            String cleanedHtml = getCleanedHtmlByJSoup();
 
             // trying to get an xml document
             mDoc = readDocFromXmlString(cleanedHtml);
+            */
+            // AFTER
+            mDoc = getCleanedDocumentByHtmlCleaner();
+
+
             if (mDoc == null) {
                 e.onError(new NullPointerException("mDoc is null (error while building from an xml string)"));
                 return;
             }
 
-            // trying to get rows
-            NodeList parsed = (NodeList) mXPath.compile(mComplexPattern.mRowPattern).evaluate(mDoc, XPathConstants.NODESET);
+            NodeList parsed = null;
+
+            try {
+                parsed = (NodeList) mXPath.evaluate(mComplexPattern.mRowPattern, mDoc, XPathConstants.NODESET);
+            } catch (XPathExpressionException ew) {
+                ew.printStackTrace();
+            }
+
 
             Map<String, String> currentRow;
+            String currentKeyToPut;
             String field;
             String value;
             // getting data from each row
-            for (int i = 0; i < parsed.getLength(); i++) {
-                currentRow = new HashMap<>();
-                for (Map.Entry<String, String> currentSelector : mComplexPattern.mColPatterns.entrySet()) {
-                    field = currentSelector.getKey();
-                    value = getByXPath(currentSelector.getValue(), parsed.item(i));
-                    currentRow.put(field, value);
+            if (parsed != null) {
+                for (int i = 0; i < parsed.getLength(); i++) {
+                    currentRow = new HashMap<>();
+                    for (Map.Entry<String, String> currentSelector : mComplexPattern.mColPatterns.entrySet()) {
+                        field = currentSelector.getKey();
+                        value = getByXPath(currentSelector.getValue(), parsed.item(i));
+
+                        // checking for bindings (aliases)
+                        if (mBindings != null) {
+                            currentKeyToPut = mBindings.get(field) == null ? field : mBindings.get(field);
+                        } else {
+                            currentKeyToPut = field;
+                        }
+
+                        currentRow.put(currentKeyToPut, value==null?"":value);
+                    }
+                    mResultTable.addRow(currentRow);
                 }
-                mResultTable.addRow(currentRow);
             }
 
 
@@ -117,7 +167,9 @@ public class XPathParser implements ICommonParser {
         });
     }
 
-    private String getCleanedHtml() {
+    private Document getCleanedDocumentByHtmlCleaner() {
+        /* // BEFORE
+        // returning String
         TagNode tagNode = mCleaner.clean(mSourceString);
 
         CleanerProperties props = mCleaner.getProperties();
@@ -125,8 +177,31 @@ public class XPathParser implements ICommonParser {
 
         XmlSerializer serializer = new PrettyXmlSerializer(props);
         return serializer.getAsString(tagNode);
+        */
+
+        TagNode RootNode = mCleaner.clean(mSourceString);
+        Document FullDocument = null;
+        try {
+            FullDocument = new DomSerializer(mCleaner.getProperties()).createDOM(RootNode);
+        } catch (ParserConfigurationException e) {
+            e.printStackTrace();
+        }
+
+        return FullDocument;
     }
 
+    private String getCleanedHtmlByJSoup() {
+
+        org.jsoup.nodes.Document doc = Jsoup.parse(mSourceString);
+        doc.outputSettings().syntax(org.jsoup.nodes.Document.OutputSettings.Syntax.xml);
+        doc.outputSettings().escapeMode(Entities.EscapeMode.extended);
+
+        return doc.html();
+    }
+
+    private String getCleanedHtmlByJTidy() {
+        return null;
+    }
     //
     // XPATH METHODS
     //

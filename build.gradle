@@ -17,8 +17,8 @@ dependencies {
     // jsoup HTML parser library @ https://jsoup.org/
     compile 'org.jsoup:jsoup:1.11.2'
 
+    // HtmlCleaner
     compile group: 'net.sourceforge.htmlcleaner', name: 'htmlcleaner', version: '2.6'
-
 
     // GSON
     compile 'com.google.code.gson:gson:2.8.2'
