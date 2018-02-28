@@ -79,6 +79,7 @@ public class AnotherXPathParser implements ICommonParser {
 
     private Single<ParseResult> getResult() {
         return Single.create(emitter -> {
+            mResultTable.clear();
 
             XPath xpath = XPathFactory.newInstance().newXPath();
 
