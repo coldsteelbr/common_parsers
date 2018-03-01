@@ -17,7 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-public class AnotherXPathParser implements ICommonParser {
+public class JSoupXPathParser implements ICommonParser {
 
     private ParseResult mResultTable = new ParseResult();
 
@@ -29,17 +29,12 @@ public class AnotherXPathParser implements ICommonParser {
     private Map<String, String> mBindings;
 
     private Gson mGson;
-    private HtmlCleaner mCleaner;
-    private Document mDoc;
     private XPath mXPath;
 
 
-    public AnotherXPathParser() {
+    public JSoupXPathParser() {
         // XPATH
         mXPath = XPathFactory.newInstance().newXPath();
-
-        // HTML CLEANER
-        mCleaner = new HtmlCleaner();
 
         // GSON for COMPLEX PATTERN
         GsonBuilder builder = new GsonBuilder();
@@ -81,8 +76,6 @@ public class AnotherXPathParser implements ICommonParser {
         return Single.create(emitter -> {
             mResultTable.clear();
 
-            XPath xpath = XPathFactory.newInstance().newXPath();
-
             org.jsoup.nodes.Document jsDoc = Jsoup.parse(mSource);
             W3CDom w3cDom = new W3CDom();
             Document document = w3cDom.fromJsoup(jsDoc);
@@ -92,14 +85,10 @@ public class AnotherXPathParser implements ICommonParser {
             NodeList rows = null;
 
             try {
-                rows = (NodeList) xpath.evaluate(mComplexPattern.mRowPattern, document, XPathConstants.NODESET);
+                rows = (NodeList) mXPath.evaluate(mComplexPattern.mRowPattern, document, XPathConstants.NODESET);
             } catch (XPathExpressionException e) {
                 e.printStackTrace();
                 emitter.onError(e);
-            }
-
-            if (null != rows) {
-                System.out.println("Rows: " + rows.getLength());
             }
 
             // Cols
@@ -108,14 +97,14 @@ public class AnotherXPathParser implements ICommonParser {
             Map<String, String> currentResultRow = null;
             for (int i = 0; i < rows.getLength(); i++) {
                 currentResultRow = new HashMap<>();
-                for (Map.Entry<String, String> currentyEntry : mComplexPattern.mColPatterns.entrySet()) {
+                for (Map.Entry<String, String> currentEntry : mComplexPattern.mColPatterns.entrySet()) {
                     try {
-                        key = currentyEntry.getKey();
+                        key = currentEntry.getKey();
                         if (mBindings.containsKey(key)) {
                             key = mBindings.get(key);
                         }
 
-                        value = (String) xpath.evaluate(currentyEntry.getValue(), rows.item(i), XPathConstants.STRING);
+                        value = (String) mXPath.evaluate(currentEntry.getValue(), rows.item(i), XPathConstants.STRING);
                         if (value == null) {
                             value = "";
                         }

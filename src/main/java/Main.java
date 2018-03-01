@@ -1,4 +1,4 @@
-import ru.romanbrazhnikov.commonparsers.AnotherXPathParser;
+import ru.romanbrazhnikov.commonparsers.JSoupXPathParser;
 import ru.romanbrazhnikov.commonparsers.ICommonParser;
 import ru.romanbrazhnikov.commonparsers.XPathParser;
 import ru.romanbrazhnikov.fileutils.FileUtils;
@@ -68,7 +68,7 @@ public class Main {
         ///////////////
         System.out.println("Little test:");
 
-        ICommonParser testParser = new AnotherXPathParser();
+        ICommonParser testParser = new JSoupXPathParser();
 
         testParser.setSource(sTestTableDoc);
         testParser.setPattern(sTestTablePattern);
