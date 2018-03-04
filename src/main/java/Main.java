@@ -12,14 +12,20 @@ import java.util.Map;
 public class Main {
 
     private static String sFullDocPattern =
-            "{\n" +
-                    "\"RowPattern\" : \"//*[@id='main']//div[contains(@class, 'realty-item')]\",\n" +
-                    "\"ColPatterns\" : {\n" +
-                    "\"ROOMS\" : \"a/@href\",\n" +
-                    "\"ADDRESS\" : \"a/div[2]/div[1]/div[2]/text()\",\n" +
-                    "\"SECONDLEVEL\" : \"a[1]/@href\"\n" +
-                    "}\n" +
-                    "}";
+            "\t\t\t{\n" +
+                    "            \t\"RowPattern\" : \"//*[contains(@class, 'realty-item') and contains(@class, 'js-realty-item')]\",\n" +
+                    "            \t\"ColPatterns\" : {\n" +
+                    "            \t    \"SECONDLEVEL\" : \"a/@href\",\n" +
+                    "\n" +
+                    "\t\t\t\t\t\"ROOMS\" : \"a/div[2]/div[1]/div[1]\",\n" +
+                    "            \t\t\"ADDRESS\" : \"a/div[2]/div[1]/div[2]\",\n" +
+                    "            \t\t\"FLOOR\" : \"a/div[2]/div[2]/div[1]\",\n" +
+                    "            \t\t\"MATERIAL\" : \"a/div[2]/div[2]/div[2]\",\n" +
+                    "            \t\t\"SQUARE\" : \"a/div[2]/div[3]/div[1]/text()[2]\",\n" +
+                    "            \t\t\"TOTALPRICE\" : \"a/div[1]/div/div[1]/text()\"\n" +
+                    "\n" +
+                    "            \t}\n" +
+                    "            }";
 
     static String sTestSource =
             "<div>\n" +
@@ -66,6 +72,7 @@ public class Main {
         System.out.println("CommonParsers");
 
         ///////////////
+        /*
         System.out.println("Little test:");
 
         ICommonParser testParser = new JSoupXPathParser();
@@ -76,25 +83,51 @@ public class Main {
             System.out.println("Little test res:\n\n" + parseResult.getNiceLook());
         });
         System.out.println("\nEnd of test\n====\n");
-        if (true) return;
+        if (false) return;
+        */
         ///////////////
 
+        String IRRPatternJSON =
+                "{\n" +
+                "\t\"RowPattern\" : \"//main/div/div\",\n" +
+                "\t\"ColPatterns\": {\n" +
+                "\t\t\"DISTRICT\"       :    \"div[5]/div[1]/div/ul/li[contains(text(), 'Район города')]/text()\",\n" +
+                "\t\t\"SQUARE_KITCHEN\" : \"div[5]/div[2]/ul/li[5]/text()\",\n" +
+                "\t\t\"SQUARE_LIVING\"  : \"div[5]/div[2]/ul/li[6]/text()\",\n" +
+                "\t\t\"NOTES\"          : \"div[4]/p\"\n" +
+                "\t}\n" +
+                "}";
 
-        ICommonParser parser = new XPathParser();
+
+        String testJson =
+                "{\n" +
+                "\t\"RowPattern\" : \"//main/div/div\",\n" +
+                "\t\"ColPatterns\": {\n" +
+                "\t\t\"DISTRICT\"       :    \"div[5]/div[1]/div/ul/li[contains(text(), 'Район города')]/text()\",\n" +
+                "\t\t\"SQUARE_KITCHEN\" : \"div[5]/div[2]/ul/li[5]/text()\",\n" +
+                "\t\t\"SQUARE_LIVING\"  : \"div[5]/div[2]/ul/li[6]/text()\",\n" +
+                "\t\t\"NOTES\"          : \"div[4]/p\"\n" +
+                "\t}\n" +
+                "}";
+                                            // /div[5]/div[2]/div[1]/ul/li[5]/text()
+        System.out.println("JSoupXPathParser");
+        ICommonParser parser = new JSoupXPathParser();
         String testSource = null; //TestSource.getText();
         try {
-            testSource = FileUtils.readFromFileToString("full_doc.htm");
+            testSource = FileUtils.readFromFileToString("full_irr_sub.html");
         } catch (IOException e) {
             e.printStackTrace();
         }
         parser.setSource(testSource);
-        parser.setPattern(sFullDocPattern);
-        parser.setMatchNames(new HashSet<>(Arrays.asList("ADDRESS", "SECONDLEVEL", "ROOMS")));
+        parser.setPattern(IRRPatternJSON);
+        parser.setMatchNames(new HashSet<>(Arrays.asList("DISTRICT", "SQUARE_KITCHEN", "SQUARE_LIVING", "NOTES")));
 
         Map<String, String> bind = new HashMap<>();
-        bind.put("ADDRESS", "address");
-        bind.put("SECONDLEVEL", "second");
-        bind.put("ROOMS", "flats");
+        bind.put("DISTRICT", "district");
+        bind.put("SQUARE_KITCHEN", "square_kitchen");
+        bind.put("SQUARE_LIVING", "square_living");
+        bind.put("NOTES", "notes");
+
 
         parser.setBindings(bind);
 

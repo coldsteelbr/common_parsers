@@ -3,9 +3,9 @@ package ru.romanbrazhnikov.commonparsers;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.reactivex.Single;
-import org.htmlcleaner.HtmlCleaner;
 import org.jsoup.Jsoup;
 import org.jsoup.helper.W3CDom;
+import org.jsoup.select.Elements;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 
@@ -77,10 +77,19 @@ public class JSoupXPathParser implements ICommonParser {
             mResultTable.clear();
 
             org.jsoup.nodes.Document jsDoc = Jsoup.parse(mSource);
+
+            // removing namespace attrs from the root
+            Elements elements = jsDoc.getElementsByTag("html");
+            if (elements != null) {
+                elements.removeAttr("xmlns");
+                elements.removeAttr("xmlns:og");
+                elements.removeAttr("prefix");
+            }
+
             W3CDom w3cDom = new W3CDom();
             Document document = w3cDom.fromJsoup(jsDoc);
 
-
+//            DocUtils.printDocument(document, System.out);
             // Rows
             NodeList rows = null;
 
