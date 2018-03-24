@@ -9,11 +9,13 @@ import org.jsoup.select.Elements;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 
+import javax.xml.namespace.NamespaceContext;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -25,12 +27,11 @@ public class JSoupXPathParser implements ICommonParser {
     private ComplexPattern mComplexPattern;
 
     private String mSource;
-    private Set<String> mNames;
+    private Set<String> mNames; // TODO: rid of this
     private Map<String, String> mBindings;
 
     private Gson mGson;
     private XPath mXPath;
-
 
     public JSoupXPathParser() {
         // XPATH
@@ -50,6 +51,25 @@ public class JSoupXPathParser implements ICommonParser {
             }
         }).create();
 
+    }
+
+    public void setXmlNamespaces(Map<String, String> ns) {
+        mXPath.setNamespaceContext(new NamespaceContext() {
+            @Override
+            public String getNamespaceURI(String prefix) {
+                return ns.get(prefix);
+            }
+
+            @Override
+            public String getPrefix(String namespaceURI) {
+                return null;
+            }
+
+            @Override
+            public Iterator getPrefixes(String namespaceURI) {
+                return null;
+            }
+        });
     }
 
     @Override
